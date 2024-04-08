@@ -12,52 +12,45 @@ export const CheckAuth = ({ children }) => {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setStatus({
-        loading: false,
-        error: false,
-        invalidtoken: true,
-      });
-      return;
-    }
-
-    fetch(import.meta.env.VITE_API_URL + "auth/me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        if (res.status === 401) {
-          setStatus({
-            loading: false,
-            error: false,
-            invalidtoken: true,
-          });
-          return;
-        }
-        if (!res.ok) {
-          throw new Error("An error occurred");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setUser(data);
+    const verifyToken = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
         setStatus({
           loading: false,
           error: false,
-          invalidtoken: false,
+          invalidtoken: true,
         });
-      })
-      .catch((error) => {
-        console.error(error);
+        return;
+      }
+
+      const response = await fetch(import.meta.env.VITE_API_URL + "auth/me", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      // console.log(response);
+      // console.log(data);
+      if (data.error) {
         setStatus({
           loading: false,
           error: true,
-          data: null,
-          invalidtoken: false,
+          invalidtoken: true,
         });
+        return;
+      }
+      if (data.user) {
+        setUser(data.user);
+      }
+      setStatus({
+        loading: false,
+        error: false,
+        invalidtoken: false,
       });
+    };
+
+    verifyToken();
   }, []);
 
   if (status.loading) {

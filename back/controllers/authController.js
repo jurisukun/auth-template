@@ -1,6 +1,32 @@
 import jsonwebtoken from "jsonwebtoken";
 import { promisePool } from "../config/dbconfig.js";
 
+export const me = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    console.log(token);
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "Token is required", error: true });
+    }
+    const decoded = jsonwebtoken.verify(token, process.env.JWT_SECRET);
+    console.log("decode", decoded);
+    if (!decoded) {
+      return res.status(401).json({ message: "Invalid token", error: true });
+    }
+    const [rows] = await promisePool.query("SELECT * FROM users WHERE id = ?", [
+      decoded.userid,
+    ]);
+    res.status(200).json({ user: rows[0] });
+  } catch (error) {
+    console.log("ERROR...", error);
+    return res
+      .status(401)
+      .json({ message: "Internal Server Error", error: true });
+  }
+};
+
 export const login = async (req, res) => {
   const { username, password } = req.body;
   console.log(req.body);

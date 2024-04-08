@@ -19,7 +19,12 @@ export function Login() {
         }),
       });
       const data = await result.json();
-      console.log(data);
+      if (!data?.token) {
+        alert("Invalid username or password");
+        return;
+      }
+      localStorage.setItem("token", data.token);
+      window.location.reload();
     } catch (error) {
       console.log(error);
     }
